@@ -66,7 +66,7 @@ MODEL_CONFIGS = {
     },
     "cifar10_discrete": {
         "in_channels": 3,
-        "model_channels": 32,
+        "model_channels": 48,
         "out_channels": 3,
         "num_res_blocks": 2,
         "attention_resolutions": [2],
