@@ -77,7 +77,7 @@ MODEL_CONFIGS = {
         "num_classes": None,
         "use_checkpoint": False,
         "num_heads": -1,
-        "num_head_channels": 64,
+        "num_head_channels": 32,
         "num_heads_upsample": -1,
         "use_scale_shift_norm": True,
         "resblock_updown": False,
