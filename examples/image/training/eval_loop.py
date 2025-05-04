@@ -116,6 +116,13 @@ def eval_model(
     for data_iter_step, (samples, labels) in enumerate(data_loader):
         samples = samples.to(device, non_blocking=True)
         labels = labels.to(device, non_blocking=True)
+    
+        # --- CHANNEL DUPLICATION AND RESIZING FOR FID ---
+        if samples.shape[1] == 1:
+            samples = samples.repeat(1, 3, 1, 1)
+        samples = torch.nn.functional.interpolate(samples, size=(299, 299), mode='bicubic', align_corners=False)
+        # --- END OF FID PREPROCESSING ---
+    
         fid_metric.update(samples, real=True)
 
         if num_synthetic < fid_samples:
