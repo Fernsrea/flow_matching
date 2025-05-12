@@ -116,6 +116,8 @@ def eval_model(
     for data_iter_step, (samples, labels) in enumerate(data_loader):
         samples = samples.to(device, non_blocking=True)
         labels = labels.to(device, non_blocking=True)
+        if samples.shape[1] == 1:
+            samples = samples.repeat(1, 3, 1, 1)
         fid_metric.update(samples, real=True)
 
         if num_synthetic < fid_samples:
@@ -178,6 +180,9 @@ def eval_model(
             )
             if num_synthetic + synthetic_samples.shape[0] > fid_samples:
                 synthetic_samples = synthetic_samples[: fid_samples - num_synthetic]
+            if synthetic_samples.shape[1] == 1:
+                synthetic_samples = synthetic_samples.repeat(1, 3, 1, 1)
+
             fid_metric.update(synthetic_samples, real=False)
             num_synthetic += synthetic_samples.shape[0]
             if not snapshots_saved and args.output_dir:
