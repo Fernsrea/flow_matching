@@ -101,7 +101,10 @@ def normalization(channels):
     :param channels: number of input channels.
     :return: an nn.Module for normalization.
     """
-    return GroupNorm32(32, channels)
+    groups = min(32, channels)
+    assert channels % groups == 0, f"channels ({channels}) must be divisible by groups ({groups})"
+    return GroupNorm32(groups, channels)
+
 
 
 def timestep_embedding(timesteps, dim, max_period=10000):
