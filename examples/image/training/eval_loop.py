@@ -116,13 +116,6 @@ def eval_model(
     for data_iter_step, (samples, labels) in enumerate(data_loader):
         samples = samples.to(device, non_blocking=True)
         labels = labels.to(device, non_blocking=True)
-    
-        # --- CHANNEL DUPLICATION AND RESIZING FOR FID ---
-        if samples.shape[1] == 1:
-            samples = samples.repeat(1, 3, 1, 1)
-        samples = torch.nn.functional.interpolate(samples, size=(299, 299), mode='bicubic', align_corners=False)
-        # --- END OF FID PREPROCESSING ---
-    
         fid_metric.update(samples, real=True)
 
         if num_synthetic < fid_samples:
@@ -179,24 +172,13 @@ def eval_model(
                     synthetic_samples * 0.5 + 0.5, min=0.0, max=1.0
                 )
                 synthetic_samples = torch.floor(synthetic_samples * 255)
-                synthetic_samples = synthetic_samples.to(torch.float32) / 255.0
+            synthetic_samples = synthetic_samples.to(torch.float32) / 255.0
             logger.info(
                 f"{samples.shape[0]} samples generated in {cfg_scaled_model.get_nfe()} evaluations."
             )
             if num_synthetic + synthetic_samples.shape[0] > fid_samples:
                 synthetic_samples = synthetic_samples[: fid_samples - num_synthetic]
-
-            # --- CHANNEL DUPLICATION AND RESIZING FOR FID ---
-            if synthetic_samples.shape[1] == 1:
-                synthetic_samples = synthetic_samples.repeat(1, 3, 1, 1)
-            if samples.shape[1] == 1:
-                samples = samples.repeat(1, 3, 1, 1)
-
-            synthetic_samples = torch.nn.functional.interpolate(synthetic_samples, size=(299, 299), mode='bicubic', align_corners=False)
-            samples = torch.nn.functional.interpolate(samples, size=(299, 299), mode='bicubic', align_corners=False)
-            # --- END OF FID PREPROCESSING ---
-
-            fid_metric.update(synthetic_samples.clamp(0, 255).byte(), real=False)
+            fid_metric.update(synthetic_samples, real=False)
             num_synthetic += synthetic_samples.shape[0]
             if not snapshots_saved and args.output_dir:
                 save_image(
