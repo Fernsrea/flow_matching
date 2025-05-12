@@ -30,7 +30,7 @@ class PixelEmbedding(nn.Module):
 @dataclass(eq=False)
 class DiscreteUNetModel(nn.Module):
     vocab_size: int
-    in_channels: int = 1
+    in_channels: int = 3
     model_channels: int = 128
     out_channels: int = 3
     num_res_blocks: int = 2
@@ -89,7 +89,6 @@ class DiscreteUNetModel(nn.Module):
         self, x_t: torch.Tensor, t: torch.Tensor, extra: Mapping[str, torch.Tensor]
     ) -> torch.Tensor:
         B, C, H, W = x_t.shape
-        print("Pixel embedding output shape:", x_emb.shape)
         logits = (
             self.unet(self.pixel_embedding(x_t), t, extra)
             .reshape(B, C, self.vocab_size, H, W)
