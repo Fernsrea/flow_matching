@@ -3,6 +3,7 @@
 #
 # This source code is licensed under the CC-by-NC license found in the
 # LICENSE file in the root directory of this source tree.
+
 from typing import Union
 
 from models.discrete_unet import DiscreteUNetModel
@@ -85,13 +86,13 @@ MODEL_CONFIGS = {
         "with_fourier_features": False,
     },
     "mnist": {
-        "in_channels": 1,
-        "model_channels": 64,  
+        "in_channels": 3,
+        "model_channels": 64,
         "out_channels": 1,
-        "num_res_blocks": 2,   
-        "attention_resolutions": [2], 
-        "dropout": 0.1,       
-        "channel_mult": [1, 2, 2], 
+        "num_res_blocks": 2,
+        "attention_resolutions": [2],
+        "dropout": 0.1,
+        "channel_mult": [1, 2, 2],
         "conv_resample": True,
         "dims": 2,
         "num_classes": None,
@@ -105,11 +106,11 @@ MODEL_CONFIGS = {
         "with_fourier_features": False,
     },
     "mnist_discrete": {
-        "in_channels": 3,
+        "in_channels": 3,  # because we're repeating MNIST grayscale to RGB
         "model_channels": 96,
         "out_channels": 3,
         "num_res_blocks": 2,
-        "attention_resolutions": [], 
+        "attention_resolutions": [],
         "dropout": 0.1,
         "channel_mult": [1, 2, 2],
         "conv_resample": False,
@@ -117,7 +118,7 @@ MODEL_CONFIGS = {
         "num_classes": None,
         "use_checkpoint": False,
         "num_heads": -1,
-        "num_head_channels": 16,  
+        "num_head_channels": 16,
         "num_heads_upsample": -1,
         "use_scale_shift_norm": True,
         "resblock_updown": False,
@@ -125,7 +126,6 @@ MODEL_CONFIGS = {
         "with_fourier_features": False,
     },
 }
-
 
 def instantiate_model(
     architechture: str, is_discrete: bool, use_ema: bool
