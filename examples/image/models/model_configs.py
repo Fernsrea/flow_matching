@@ -105,9 +105,9 @@ MODEL_CONFIGS = {
         "with_fourier_features": False,
     },
     "mnist_discrete": {
-        "in_channels": 1,
-        "model_channels": 32,
-        "out_channels": 1,
+        "in_channels": 3,
+        "model_channels": 96,
+        "out_channels": 3,
         "num_res_blocks": 2,
         "attention_resolutions": [], 
         "dropout": 0.1,
