@@ -68,11 +68,17 @@ def main(args):
             transform=transform_train,
         )
     elif args.dataset == "mnist":
-        dataset_train = datasets.MNIST(
+        class MNISTRGB(datasets.MNIST):
+            def __getitem__(self, index):
+                img, target = super().__getitem__(index)
+                img = img.repeat(3, 1, 1)  # Convert grayscale (1, H, W) to RGB (3, H, W)
+                return img, target
+
+        dataset_train = MNISTRGB(
             root=args.data_path,
             train=True,
             download=True,
-            transform=transform_train
+            transform=transform_train,
         )
     else:
         raise NotImplementedError(f"Unsupported dataset {args.dataset}")
