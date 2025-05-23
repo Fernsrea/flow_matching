@@ -29,6 +29,32 @@ from training.train_loop import train_one_epoch
 
 logger = logging.getLogger(__name__)
 
+class MaskedMNISTDataset(torch.utils.data.Dataset):
+    def __init__(self, data_path, transform=None):
+        data = torch.load(data_path)
+        self.images = data['images']
+        self.masks = data['masks']
+        self.labels = data['labels']
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, idx):
+        img = self.images[idx]           # shape (1, 28, 28)
+        mask = self.masks[idx]           # shape (1, 28, 28)
+        label = self.labels[idx]
+
+        # Apply transform to masked image
+        img_masked = img * mask
+        if self.transform:
+            img_masked = self.transform(img_masked)
+
+        # Convert to RGB (3-channel) for model compatibility
+        img_rgb = img_masked.repeat(3, 1, 1)
+
+        return img_rgb, label
+
 
 def main(args):
     logging.basicConfig(
@@ -68,18 +94,9 @@ def main(args):
             transform=transform_train,
         )
     elif args.dataset == "mnist":
-        class MNISTRGB(datasets.MNIST):
-            def __getitem__(self, index):
-                img, target = super().__getitem__(index)
-                img = img.repeat(3, 1, 1)  # Convert grayscale (1, H, W) to RGB (3, H, W)
-                return img, target
+        dataset_path = os.path.join(args.data_path, "masked_mnist_train.pt")
+        dataset_train = MaskedMNISTDataset(dataset_path, transform=None)
 
-        dataset_train = MNISTRGB(
-            root=args.data_path,
-            train=True,
-            download=True,
-            transform=transform_train,
-        )
     else:
         raise NotImplementedError(f"Unsupported dataset {args.dataset}")
 
