@@ -96,6 +96,8 @@ def main(args):
     elif args.dataset == "mnist":
         dataset_path = os.path.join(args.data_path, "masked_mnist_train.pt")
         dataset_train = MaskedMNISTDataset(dataset_path, transform=None)
+        logger.info("Applied transform to masked image")
+        
 
     else:
         raise NotImplementedError(f"Unsupported dataset {args.dataset}")
