@@ -120,6 +120,36 @@ def main(args):
     )
     logger.info(str(sampler_train))
 
+    #  evaluation dataloader if mnist
+    if args.eval_only or args.test_run or args.eval_frequency > 0:
+        if args.dataset == "mnist":
+            transform_eval = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Lambda(lambda x: x.repeat(3, 1, 1))
+            ])
+            dataset_eval = datasets.MNIST(
+                root=args.data_path,
+                train=False,
+                download=True,
+                transform=transform_eval
+            )
+            sampler_eval = torch.utils.data.DistributedSampler(
+                dataset_eval, num_replicas=num_tasks, rank=global_rank, shuffle=False
+            )
+            data_loader_eval = torch.utils.data.DataLoader(
+                dataset_eval,
+                sampler=sampler_eval,
+                batch_size=args.batch_size,
+                num_workers=args.num_workers,
+                pin_memory=args.pin_mem,
+                drop_last=False,
+            )
+        else:
+            data_loader_eval = data_loader_train
+    else:
+        data_loader_eval = None
+
+
     # define the model
     logger.info("Initializing Model")
     model = instantiate_model(
@@ -226,7 +256,7 @@ def main(args):
                 fid_samples = args.fid_samples // num_tasks
             eval_stats = eval_model(
                 model,
-                data_loader_train,
+                data_loader_eval if data_loader_eval is not None else data_loader_train,
                 device,
                 epoch=epoch,
                 fid_samples=fid_samples,
