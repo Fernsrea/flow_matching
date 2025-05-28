@@ -17,6 +17,7 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 import torchvision.datasets as datasets
+from torchvision import transforms
 from models.model_configs import instantiate_model
 from train_arg_parser import get_args_parser
 
