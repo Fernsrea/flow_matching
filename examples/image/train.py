@@ -56,6 +56,18 @@ class MaskedMNISTDataset(torch.utils.data.Dataset):
 
         return img_rgb, label
 
+def get_dataset_path_for_epoch(epoch, base_path):
+    """
+    Returns dataset path based on epoch using curriculum masking schedule.
+    """
+    if epoch < 15:
+        mask_size = 6
+    elif epoch < 30:
+        mask_size = 10
+    else:
+        mask_size = 14
+    return os.path.join(base_path, f"masked_mnist_train_{mask_size}.pt")
+
 
 def main(args):
     logging.basicConfig(
@@ -95,10 +107,10 @@ def main(args):
             transform=transform_train,
         )
     elif args.dataset == "mnist":
-        dataset_path = os.path.join(args.data_path, "masked_mnist_train.pt")
-        dataset_train = MaskedMNISTDataset(dataset_path, transform=None)
-        logger.info("Applied transform to masked image")
-        
+        initial_path = get_dataset_path_for_epoch(args.start_epoch, args.data_path)
+        dataset_train = MaskedMNISTDataset(initial_path, transform=transform_train)
+        logger.info(f"Applied transform to masked image: {initial_path}")
+        current_mask_size = int(initial_path.split("_")[-1].split(".")[0])
 
     else:
         raise NotImplementedError(f"Unsupported dataset {args.dataset}")
@@ -210,6 +222,25 @@ def main(args):
     logger.info(f"Start from {args.start_epoch} to {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(args.start_epoch, args.epochs):
+            # Reload dataset if mask size should change
+        dataset_path = get_dataset_path_for_epoch(epoch, args.data_path)
+        new_mask_size = int(dataset_path.split("_")[-1].split(".")[0])
+        if new_mask_size != current_mask_size:
+            logger.info(f"Switching to dataset with mask size {new_mask_size} at epoch {epoch}")
+            dataset_train = MaskedMNISTDataset(dataset_path, transform=None)
+            sampler_train = torch.utils.data.DistributedSampler(
+                dataset_train, num_replicas=distributed_mode.get_world_size(), rank=distributed_mode.get_rank(), shuffle=True
+            )
+            data_loader_train = torch.utils.data.DataLoader(
+                dataset_train,
+                sampler=sampler_train,
+                batch_size=args.batch_size,
+                num_workers=args.num_workers,
+                pin_memory=args.pin_mem,
+                drop_last=True,
+            )
+            current_mask_size = new_mask_size
+
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
         if not args.eval_only:
